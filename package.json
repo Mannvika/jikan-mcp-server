@@ -1,0 +1,15 @@
+{
+  "name": "jikan-mcp-server",
+  "version": "1.0.0",
+  "description": "MCP Server for Jikan (Unofficial My Anime List API)",
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
+  }
+}
