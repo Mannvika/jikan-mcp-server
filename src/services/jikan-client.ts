@@ -17,7 +17,7 @@ async function sleep(ms: number) : Promise<void> {
 
 async function rateLimit() {
     const timeSinceLastRequest = Date.now() - lastRequestTime;
-    console.log(`Time since last request: ${timeSinceLastRequest}ms`);
+    console.error(`Time since last request: ${timeSinceLastRequest}ms`);
 
     if (timeSinceLastRequest < RATE_LIMIT_DELAY_MS) {
         await sleep(RATE_LIMIT_DELAY_MS - timeSinceLastRequest);
@@ -38,7 +38,9 @@ async function fetchWithRateLimit<T>(endpoint: string): Promise<T> {
 }
 
 export async function searchAnime(query: string): Promise<JikanSearchResponse> {
-    const response = await fetchWithRateLimit<JikanSearchResponse>(`anime?q=${encodeURIComponent(query)}`);
+    // We add order_by=members&sort=desc so the most popular entry (the main show) is ALWAYS data[0]
+    const url = `anime?q=${encodeURIComponent(query)}&order_by=members&sort=desc`;
+    const response = await fetchWithRateLimit<JikanSearchResponse>(url);
     return response;
 }
 
