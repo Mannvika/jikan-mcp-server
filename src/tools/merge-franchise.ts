@@ -4,22 +4,22 @@ import type { MergedFranchise, Relation, AnimeNode } from "../types/jikan.js";
 const VALID_RELATION_TYPES = ["Sequel", "Prequel", "Alternative version", "Alternative setting", "Spin-off", "Side story", "Parent story"];
 
 export async function handleMergeFranchise(query: string) : Promise<MergedFranchise | null> {
-    console.log(`Merging franchise for: ${query}`);
+    console.error(`Merging franchise for: ${query}`);
 
     // Find the root anime
     const searchResponse = await searchAnime(query);
 
     if(!searchResponse.data || searchResponse.data.length === 0) {
-        console.log(`No results found for query: ${query}`);
+        console.error(`No results found for query: ${query}`);
         return null;
     }
 
     const rootAnime = searchResponse.data[0];
     if (!rootAnime) {
-        console.log(`No valid anime data found for query: ${query}`);
+        console.error(`No valid anime data found for query: ${query}`);
         return null;
     }
-    console.log("Found anime:", rootAnime.title);
+    console.error("Found anime:", rootAnime.title);
 
     // BFS from the root to all its relations
     const visitedIds = new Set<number>();
@@ -34,7 +34,7 @@ export async function handleMergeFranchise(query: string) : Promise<MergedFranch
         if(visitedIds.has(currentId)) continue;
         visitedIds.add(currentId);
 
-        console.log("Visiting anime:", currentId);
+        console.error("Visiting anime:", currentId);
 
         try{
             // Get the details of the current anime
@@ -70,7 +70,7 @@ export async function handleMergeFranchise(query: string) : Promise<MergedFranch
         }
     }
 
-    console.log("Collected entries:", collectedEntries.length);
+    console.error("Collected entries:", collectedEntries.length);
 
     collectedEntries.sort((a, b) => {
             if (!a.release_date) return 1;
