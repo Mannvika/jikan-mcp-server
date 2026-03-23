@@ -3,12 +3,13 @@
   "compilerOptions": {
     // File Layout
     "rootDir": "./src",
-    // "outDir": "./dist",
+    "outDir": "./build",
 
     // Environment Settings
     // See also https://aka.ms/tsconfig/module
-    "module": "nodenext",
-    "target": "esnext",
+    "module": "Node16",
+    "moduleResolution": "Node16",
+    "target": "ES2022",
     "types": ["node"],
     // For nodejs:
     // "lib": ["esnext"],
@@ -40,5 +41,8 @@
     "noUncheckedSideEffectImports": true,
     "moduleDetection": "force",
     "skipLibCheck": true,
-  }
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true
+  },
+  "include": ["src/**/*"]
 }
