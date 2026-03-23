@@ -1,5 +1,5 @@
 // src/test-jikan.ts
-import { handleMergeFranchise } from './tools/merge-franchise.js';
+import { handleMergeFranchise } from '../tools/merge-franchise.js';
 
 async function runTests() {
     console.log("==========================================");

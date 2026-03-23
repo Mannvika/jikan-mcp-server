@@ -1,5 +1,5 @@
 // src/test-jikan.ts
-import { searchAnime, getAnimeRelations, getAnimeDetails } from './services/jikan-client.js';
+import { searchAnime, getAnimeRelations, getAnimeDetails } from '../services/jikan-client.js';
 
 async function runTests() {
     console.log("Starting Jikan API Tests...\n");
