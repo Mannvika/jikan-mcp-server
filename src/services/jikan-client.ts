@@ -26,15 +26,25 @@ async function rateLimit() {
     lastRequestTime = Date.now();
 }
 
-async function fetchWithRateLimit<T>(endpoint: string): Promise<T> {
-    await rateLimit();
-    const response = await fetch(`${JIKAN_BASE_URL}/${endpoint}`);
-
-    if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`);
+async function fetchWithRateLimit<T>(endpoint: string, retries = 3): Promise<T> {
+    for (let i = 0; i < retries; i++) {
+        await rateLimit();
+        const response = await fetch(`${JIKAN_BASE_URL}/${endpoint}`);
+        
+        if (response.ok) {
+            return response.json() as Promise<T>;
+        }
+        
+        if (response.status === 429) {
+            console.error(`[Rate Limited] Pausing for 2 seconds before retrying /${endpoint}...`);
+            await sleep(2000);
+            continue; 
+        }
+        
+        throw new Error(`Jikan API Error: ${response.status} on /${endpoint}`);
     }
-
-    return response.json() as Promise<T>;
+    
+    throw new Error(`Failed to fetch /${endpoint} after ${retries} retries.`);
 }
 
 export async function searchAnime(query: string): Promise<JikanSearchResponse> {

@@ -57,7 +57,7 @@ export async function handleMergeFranchise(query: string) : Promise<MergedFranch
             for(const relationsGroup of relationsData){
                 if(VALID_RELATION_TYPES.includes(relationsGroup.relation)){
                     for(const relation of relationsGroup.entry){
-                        if(relation.type === "anime" && !visitedIds.has(relation.mal_id)){
+                        if(relation.type.toLowerCase() === "anime" && !visitedIds.has(relation.mal_id)){
                             queue.push(relation.mal_id);
                         }
                     }
