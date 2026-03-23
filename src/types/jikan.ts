@@ -39,14 +39,14 @@ export interface JikanRelationResponse{
 
 // Merge Franchise Tool
 export interface MergedFranchise{
-    franchies_name: string;
+    franchise_name: string;
     root_mal_id: number;
     total_entries: number;
     entries: {
         mal_id: number;
         title: string;
         type: string;
-        release_data: string | null;
+        release_date: string | null;
         relation_to_root: string;
     }[]
 }

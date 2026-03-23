@@ -7,7 +7,7 @@ import type {
 } from "../types/jikan.js";
 
 const JIKAN_BASE_URL = 'https://api.jikan.moe/v4'
-const RATE_LIMIT_DELAY_MS = 500; 
+const RATE_LIMIT_DELAY_MS = 1000; 
 
 let lastRequestTime = 0;
 
@@ -29,6 +29,11 @@ async function rateLimit() {
 async function fetchWithRateLimit<T>(endpoint: string): Promise<T> {
     await rateLimit();
     const response = await fetch(`${JIKAN_BASE_URL}/${endpoint}`);
+
+    if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+
     return response.json() as Promise<T>;
 }
 
@@ -37,8 +42,8 @@ export async function searchAnime(query: string): Promise<JikanSearchResponse> {
     return response;
 }
 
-export async function getAnimeDetails(malId: number): Promise<AnimeDetails> {
-    const response = await fetchWithRateLimit<AnimeDetails>(`anime/${malId}`);
+export async function getAnimeDetails(malId: number): Promise<JikanAnimeResponse> {
+    const response = await fetchWithRateLimit<JikanAnimeResponse >(`anime/${malId}`);
     return response;
 }
 

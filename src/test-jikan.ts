@@ -29,8 +29,8 @@ async function runTests() {
         console.log(`\n--- Test 3: getAnimeDetails(${firstAnime.mal_id}) ---`);
         const fullDetails = await getAnimeDetails(firstAnime.mal_id);
         console.log(`Success!`);
-        console.log(`Aired from: ${fullDetails.aired?.from}`);
-        console.log(`Synopsis preview: ${fullDetails.synopsis?.substring(0, 75)}...`);
+        console.log(`Aired from: ${fullDetails.data.aired?.from}`);
+        console.log(`Synopsis preview: ${fullDetails.data.synopsis?.substring(0, 75)}...`);
 
         console.log("\n✅ All tests completed successfully!");
 
