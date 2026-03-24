@@ -1,5 +1,6 @@
 import { searchAnime, getAnimeDetails, getAnimeRelations, getMangaRelations, RATE_LIMIT_DELAY_MS } from "../services/jikan-client.js";
 import type { MergedFranchise, Relation, AnimeNode } from "../types/jikan.js";
+import { cacheDB } from "../index.js";
 
 const VALID_RELATION_TYPES = [
     "sequel", "prequel", "alternative version", "alternative setting", 
@@ -11,7 +12,91 @@ interface QueueNode{
     type: string;
 }
 
+async function checkCache(query: string): Promise<MergedFranchise | null> {
+    return new Promise((resolve, reject) => {
+        cacheDB.get(
+            "SELECT data, ttl FROM cache WHERE query = ?",
+            [query],
+            (err, row: { data: string; ttl: number } | undefined) => {
+                if (err) {
+                    reject(err);
+                    return;
+                }
+                
+                if (!row) {
+                    resolve(null);
+                    return;
+                }
+                
+                const currentTime = Date.now();
+                const ttl = row.ttl;
+                
+                // Check if TTL is expired (7 days = 7 * 24 * 60 * 60 * 1000 ms)
+                const sevenDaysMs = 7 * 24 * 60 * 60 * 1000;
+                if (currentTime - ttl > sevenDaysMs) {
+                    // Delete expired entry
+                    cacheDB.run(
+                        "DELETE FROM cache WHERE query = ?",
+                        [query],
+                        (deleteErr) => {
+                            if (deleteErr) {
+                                reject(deleteErr);
+                            } else {
+                                resolve(null);
+                            }
+                        }
+                    );
+                } else {
+                    // Return cached data
+                    try {
+                        const parsedData = JSON.parse(row.data) as MergedFranchise;
+                        resolve(parsedData);
+                    } catch (parseErr) {
+                        // Invalid JSON, delete the entry
+                        cacheDB.run(
+                            "DELETE FROM cache WHERE query = ?",
+                            [query],
+                            (deleteErr) => {
+                                if (deleteErr) {
+                                    reject(deleteErr);
+                                } else {
+                                    resolve(null);
+                                }
+                            }
+                        );
+                    }
+                }
+            }
+        );
+    });
+}
+
+async function saveToCache(query: string, data: MergedFranchise): Promise<void> {
+    return new Promise((resolve, reject) => {
+        const ttl = Date.now(); // Current timestamp for TTL
+        const jsonData = JSON.stringify(data);
+        
+        cacheDB.run(
+            "INSERT OR REPLACE INTO cache (query, data, ttl) VALUES (?, ?, ?)",
+            [query, jsonData, ttl],
+            (err) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve();
+                }
+            }
+        );
+    });
+}
+
 export async function handleMergeFranchise(query: string) : Promise<MergedFranchise | null> {
+    // Check cache
+    const cachedResult = await checkCache(query);
+    if(cachedResult) {
+        return cachedResult;
+    }
+    
     console.error(`Merging franchise for: ${query}`);
 
     // Find the root anime
@@ -130,6 +215,15 @@ export async function handleMergeFranchise(query: string) : Promise<MergedFranch
         entries: collectedEntries,
         total_entries: collectedEntries.length
     };
+    
+    // Save to cache for future requests
+    try {
+        await saveToCache(query, finalResult);
+        console.error(`Saved to cache for query: ${query}`);
+    } catch (error) {
+        console.error("Failed to save to cache:", error);
+        // Continue even if cache save fails
+    }
     
     return finalResult;
 }

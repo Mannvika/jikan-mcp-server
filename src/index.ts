@@ -1,8 +1,18 @@
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { CallToolRequestSchema, ListToolsRequestSchema } from "@modelcontextprotocol/sdk/types.js";
+import sqlite3 from "sqlite3";
+import path from "path";
+import { fileURLToPath } from "url";
 
 import { handleMergeFranchise } from "./tools/merge-franchise.js";
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
+
+const dbPath = path.join(__dirname, "..", "cache.db")
+
+export const cacheDB = new sqlite3.Database(dbPath);
 
 const server = new Server(
     {
@@ -87,6 +97,10 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 });
 
 async function main() {
+  cacheDB.serialize(() => {
+    cacheDB.run("CREATE TABLE IF NOT EXISTS cache (query TEXT PRIMARY KEY, data TEXT, ttl INTEGER)");
+  });
+  
   const transport = new StdioServerTransport();
   await server.connect(transport);
   console.error("Jikan MCP Server started");
