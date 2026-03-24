@@ -1,7 +1,15 @@
-import { searchAnime, getAnimeDetails, getAnimeRelations } from "../services/jikan-client.js";
+import { searchAnime, getAnimeDetails, getAnimeRelations, getMangaRelations } from "../services/jikan-client.js";
 import type { MergedFranchise, Relation, AnimeNode } from "../types/jikan.js";
 
-const VALID_RELATION_TYPES = ["Sequel", "Prequel", "Alternative version", "Alternative setting", "Spin-off", "Side story", "Parent story"];
+const VALID_RELATION_TYPES = [
+    "sequel", "prequel", "alternative version", "alternative setting", 
+    "spin-off", "side story", "parent story", "summary", "other", "adaptation"
+];
+
+interface QueueNode{
+    id: number;
+    type: string;
+}
 
 export async function handleMergeFranchise(query: string) : Promise<MergedFranchise | null> {
     console.error(`Merging franchise for: ${query}`);
@@ -22,45 +30,62 @@ export async function handleMergeFranchise(query: string) : Promise<MergedFranch
     console.error("Found anime:", rootAnime.title);
 
     // BFS from the root to all its relations
-    const visitedIds = new Set<number>();
-    const queue: number[] = [rootAnime.mal_id];
+    const visitedIds = new Set<string>();
+    const queue: QueueNode[] = [{id: rootAnime.mal_id, type: "anime"}];
     const collectedEntries: MergedFranchise['entries'] = [];
 
     while(queue.length > 0){
         // Pop first ID in queue
-        const currentId = queue.shift()!;
+        const current = queue.shift()!;
+        const nodeKey = `${current.type}-${current.id}`;
 
         // Skip if visited
-        if(visitedIds.has(currentId)) continue;
-        visitedIds.add(currentId);
+        if(visitedIds.has(nodeKey)) continue;
+        visitedIds.add(nodeKey);
 
-        console.error("Visiting anime:", currentId);
+        console.error(`Visiting ${current.type}: ${current.id}`);
 
         try{
             // Get the details of the current anime
-            const detailsResponse = await getAnimeDetails(currentId);
-            const detailsData = detailsResponse.data;
+            let relationsData: Relation[] = [];
 
-            // Push it into the collected entries
-            collectedEntries.push({
-                mal_id: detailsData.mal_id,
-                title: detailsData.title,
-                type: detailsData.type,
-                release_date: detailsData.aired?.from || null,
-                relation_to_root: currentId === rootAnime.mal_id ? "Root" : "Related"
-            })
+            if(current.type === "anime") {
+                const detailsResponse = await getAnimeDetails(current.id);
+                const detailsData = detailsResponse.data;
 
-            const relationsResponse = await getAnimeRelations(currentId);
-            const relationsData = relationsResponse.data || [];
+                // Push it into the collected entries
+                collectedEntries.push({
+                    mal_id: detailsData.mal_id,
+                    title: detailsData.title,
+                    type: detailsData.type,
+                    release_date: detailsData.aired?.from || null,
+                    relation_to_root: current.id === rootAnime.mal_id ? "Root" : "Related"
+                })
+
+                const relationsResponse = await getAnimeRelations(current.id);
+                relationsData = relationsResponse.data || [];
+            } else if (current.type === "manga") {
+                const relationsResponse = await getMangaRelations(current.id);
+                relationsData = relationsResponse.data || [];
+            }
 
             // Add new IDs if valid relation type
             for(const relationsGroup of relationsData){
-                if(VALID_RELATION_TYPES.includes(relationsGroup.relation)){
+
+                const relationName = relationsGroup.relation.toLowerCase();
+
+                if(VALID_RELATION_TYPES.includes(relationName)){
                     for(const relation of relationsGroup.entry){
-                        if(relation.type.toLowerCase() === "anime" && !visitedIds.has(relation.mal_id)){
-                            queue.push(relation.mal_id);
+                        const relType = relation.type.toLowerCase();
+                        const nextNodeKey = `${relType}-${relation.mal_id}`;
+                        
+                        if(!visitedIds.has(nextNodeKey)){
+                            queue.push({ id: relation.mal_id, type: relType });
                         }
                     }
+                }
+                else{
+                    console.error(`Skipping relation: "${relationsGroup.relation}" on ${current.type} ${current.id}`);                
                 }
             }
 

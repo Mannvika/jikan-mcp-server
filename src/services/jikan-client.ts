@@ -59,6 +59,11 @@ export async function getAnimeDetails(malId: number): Promise<JikanAnimeResponse
     return response;
 }
 
+export async function getMangaRelations(malId: number): Promise<JikanRelationResponse> {
+    const response = await fetchWithRateLimit<JikanRelationResponse>(`manga/${malId}/relations`);
+    return response;
+}
+
 export async function getAnimeRelations(malId: number): Promise<JikanRelationResponse> {
     const response = await fetchWithRateLimit<JikanRelationResponse>(`anime/${malId}/relations`);
     return response;
