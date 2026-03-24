@@ -1,4 +1,4 @@
-import { searchAnime, getAnimeDetails, getAnimeRelations, getMangaRelations } from "../services/jikan-client.js";
+import { searchAnime, getAnimeDetails, getAnimeRelations, getMangaRelations, RATE_LIMIT_DELAY_MS } from "../services/jikan-client.js";
 import type { MergedFranchise, Relation, AnimeNode } from "../types/jikan.js";
 
 const VALID_RELATION_TYPES = [
@@ -34,7 +34,20 @@ export async function handleMergeFranchise(query: string) : Promise<MergedFranch
     const queue: QueueNode[] = [{id: rootAnime.mal_id, type: "anime"}];
     const collectedEntries: MergedFranchise['entries'] = [];
 
+    let apiCallCount = 0;
+    
+    const START_TIME = Date.now();
+    const TIMEOUT_LIMIT_MS = 3 * 60 * 1000; 
+
     while(queue.length > 0){
+
+        const elapsedTime = Date.now() - START_TIME;
+        
+        if(elapsedTime > TIMEOUT_LIMIT_MS) {
+            console.error(`Timeout reached: ${elapsedTime}ms`);
+            break;
+        }
+
         // Pop first ID in queue
         const current = queue.shift()!;
         const nodeKey = `${current.type}-${current.id}`;
@@ -47,6 +60,8 @@ export async function handleMergeFranchise(query: string) : Promise<MergedFranch
 
         try{
             // Get the details of the current anime
+            apiCallCount++;
+
             let relationsData: Relation[] = [];
 
             if(current.type === "anime") {
@@ -77,6 +92,12 @@ export async function handleMergeFranchise(query: string) : Promise<MergedFranch
                 if(VALID_RELATION_TYPES.includes(relationName)){
                     for(const relation of relationsGroup.entry){
                         const relType = relation.type.toLowerCase();
+
+                        if (current.type === "manga" && relType === "manga") {
+                            console.error(`Pruned manga-to-manga jump to ID: ${relation.mal_id}`);
+                            continue; 
+                        }
+
                         const nextNodeKey = `${relType}-${relation.mal_id}`;
                         
                         if(!visitedIds.has(nextNodeKey)){

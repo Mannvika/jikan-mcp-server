@@ -7,7 +7,7 @@ import type {
 } from "../types/jikan.js";
 
 const JIKAN_BASE_URL = 'https://api.jikan.moe/v4'
-const RATE_LIMIT_DELAY_MS = 1000; 
+export const RATE_LIMIT_DELAY_MS = 750; 
 
 let lastRequestTime = 0;
 
