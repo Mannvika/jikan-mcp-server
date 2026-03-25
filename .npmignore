@@ -1,0 +1,60 @@
+# Source files
+src/
+*.ts
+!*.d.ts
+
+# Development files
+.git/
+.gitignore
+.vscode/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Dependencies
+node_modules/
+
+# Build artifacts (keep only what's in files array)
+dist/
+build/
+
+# Cache and data files
+cache.db
+*.db
+*.sqlite
+
+# Environment files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Test files
+test/
+tests/
+**/*.test.ts
+**/*.spec.ts
+
+# Documentation (keep README)
+docs/
+*.md
+!README.md
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files
+*.swp
+*.swo
+*~
+
+# Coverage reports
+coverage/
+.nyc_output/
+
+# Temporary files
+tmp/
+temp/

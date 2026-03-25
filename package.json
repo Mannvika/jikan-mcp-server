@@ -3,10 +3,27 @@
   "version": "1.0.0",
   "description": "MCP Server for Jikan (Unofficial My Anime List API)",
   "type": "module",
-  "main": "dist/index.js",
+  "main": "build/index.js",
+  "bin": {
+    "jikan-mcp-server": "build/cli.js"
+  },
+  "files": [
+    "build/**/*",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
     "build": "tsc",
-    "dev": "tsc --watch"
+    "dev": "tsc --watch",
+    "start": "node build/cli.js",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": ["mcp", "anime", "myanimelist", "jikan", "api"],
+  "author": "Your Name",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/jikan-mcp-server.git"
   },
   "devDependencies": {
     "@types/node": "^20.19.37",

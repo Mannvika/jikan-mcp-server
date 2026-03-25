@@ -4,13 +4,25 @@ import { CallToolRequestSchema, ListToolsRequestSchema } from "@modelcontextprot
 import sqlite3 from "sqlite3";
 import path from "path";
 import { fileURLToPath } from "url";
+import os from "os";
+import fs from "fs";
 
 import { handleMergeFranchise } from "./tools/merge-franchise.js";
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
-const dbPath = path.join(__dirname, "..", "cache.db")
+// Use user's home directory for cache in production
+const isDevelopment = process.env.NODE_ENV === 'development';
+const dbPath = isDevelopment 
+  ? path.join(__dirname, "..", "cache.db")
+  : path.join(os.homedir(), ".jikan-mcp-server", "cache.db");
+
+// Ensure directory exists
+const dbDir = path.dirname(dbPath);
+if (!fs.existsSync(dbDir)) {
+  fs.mkdirSync(dbDir, { recursive: true });
+}
 
 export const cacheDB = new sqlite3.Database(dbPath);
 
@@ -96,7 +108,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
   throw new Error(`Unknown tool: ${request.params.name}`);
 });
 
-async function main() {
+export async function main() {
   cacheDB.serialize(() => {
     cacheDB.run("CREATE TABLE IF NOT EXISTS cache (query TEXT PRIMARY KEY, data TEXT, ttl INTEGER)");
   });
@@ -106,7 +118,9 @@ async function main() {
   console.error("Jikan MCP Server started");
 }
 
-main().catch((error) => {
-  console.error(error);
-  process.exit(1);
-});
+if (import.meta.url === `file://${process.argv[1]}`) {
+  main().catch((error) => {
+    console.error(error);
+    process.exit(1);
+  });
+}

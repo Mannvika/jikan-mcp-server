@@ -95,4 +95,12 @@ jspm_packages/
 
 # Stores VSCode versions used for testing VSCode extensions
 .vscode-test
+
+# Database files
 cache.db
+*.db
+*.sqlite
+*.sqlite3
+
+# User cache directory for production
+.jikan-mcp-server/
